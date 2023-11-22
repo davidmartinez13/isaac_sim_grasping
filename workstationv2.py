@@ -3,23 +3,24 @@ import numpy as np
 import pandas as pd
 
 #Custom Classes and utils
-from manager import Manager
+from managerv2 import Manager
 from utils import InverseT, re, te, R_t_from_tf
-from controllers import ForceController
 
 #Omni Libraries
 from omni.isaac.core.utils.stage import add_reference_to_stage
-from omni.isaac.core.utils.prims import create_prim
-from omni.isaac.core.prims import XFormPrim
 from omni.isaac.core.prims.rigid_prim import RigidPrim, RigidPrimView    
 from omni.isaac.core.prims.geometry_prim import GeometryPrim
-from omni.isaac.core.robots import Robot
 from omni.isaac.core.articulations import Articulation
 from omni.isaac.core.utils.prims import get_prim_at_path
 from omni.isaac.core.utils.transformations import pose_from_tf_matrix, tf_matrix_from_pose, get_world_pose_from_relative
-from omni.isaac.core.utils.prims import create_prim, delete_prim
 
 from controllers import ForceController, PositionController
+
+
+#Dynamic control API
+from omni.isaac.dynamic_control import _dynamic_control
+dc = _dynamic_control.acquire_dynamic_control_interface()
+
 
 class Workstation():
 
@@ -123,9 +124,8 @@ class Workstation():
         #Adding Object usd
         usd_path = self.manager.object_dict[self.job["object_id"]]
         add_reference_to_stage(usd_path=usd_path, prim_path=self.path+"/object_"+str(self.ID))
-
         payload = self.world.scene.add(GeometryPrim(prim_path = self.path+"/object_"+str(self.ID), name="object_"+str(self.ID)))
-        self.object_prim = RigidPrim(prim_path= self.path +"/object_"+str(self.ID) + "/base_link",
+        self.object_prim = RigidPrim(prim_path= self.path +"/object_"+str(self.ID) + "/baseLink",
                                                  position = self.object_init_pose[0], orientation = self.object_init_pose[1])
         
         self.contact_th = self.manager.contact_th[self.job['gripper']]
@@ -133,7 +133,7 @@ class Workstation():
         contact_names = []
         for i in c_names:
             contact_names.append(self.path+"/gripper_"+str(self.ID)+"/"+i)
-        self.rigid_view = RigidPrimView(prim_paths_expr= self.path +"/object_"+str(self.ID) + "/base_link", track_contact_forces= True,prepare_contact_sensors = True,
+        self.rigid_view = RigidPrimView(prim_paths_expr= self.path +"/object_"+str(self.ID) + "/baseLink", track_contact_forces= True,prepare_contact_sensors = True,
                                         contact_filter_prim_paths_expr  = contact_names, disable_stablization = False)
         #self.object_prim.disable_rigid_body_physics() 
         # Counter intuitive this disables the gravity
@@ -170,7 +170,10 @@ class Workstation():
 
         if self.grasp_set_up == True:
             self.rigid_view.apply_forces(np.asarray([0,0, -9.81 ]))
-              
+        else:
+            self.rigid_view.set_velocities([0,0,0,0,0,0]) 
+            self.rigid_view.set_local_poses(translations = np.reshape(self.object_init_pose[0], (1,3)), orientations = np.reshape(self.object_init_pose[1], (1,4)) ) 
+            
         # Check object Pose
         object_pose = self.object_prim.get_world_pose()
         object_T = tf_matrix_from_pose(object_pose[0], object_pose[1])

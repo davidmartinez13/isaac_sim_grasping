@@ -20,20 +20,14 @@ class Manager:
         self.world = world
         print("Loading File: ", grasps_path)
         self.grasps = pd.read_json(grasps_path)
-        self.gripper_names = [] #List of gripper names
-        self.object_names =[] #List of object names 
+        self.gripper_names = self.grasps.iloc[0]['gripper']
+        self.gripper = self.grasps.iloc[0]['gripper']
+        self.object = self.grasps.iloc[0]['object_id']
+        self.object_names =self.grasps.iloc[0]['object_id']
         self.pickle_file_data = utils.load_pickle(os.path.join(grippers_path, "gripper_pyb_info.pk"))
-        #print(self.pickle_file_data)
-        for i, row in self.grasps.iterrows():
-            if row['gripper'] not in self.gripper_names:
-                self.gripper_names.append(row['gripper'])
-            if row['object_id'] not in self.object_names:
-                self.object_names.append(row['object_id'])
-        #print(self.object_names)
+        
         # Initialize dictionaries (paths to objects and grippers)
-        self.gripper_dict = {}
         self._check_gripper_usd(grippers_path)
-        self.object_dict = {}
         self._check_object_usd(objects_path)
         # Current task
         self.task_pointer = 0
@@ -115,35 +109,32 @@ class Manager:
         self.rigid_view = 0
 
 
-    def _check_gripper_usd(self,grippers_path):
+    def _check_gripper_usd(self,gripper_path):
         """ Check if the gripper usds are readable by program
 
             grippers_path: Path to directory containing all gripper files. Make sure every gripper.urdf is within a folder with the same name
         """
-        for i in self.gripper_names :
-            abs_path = os.path.join(grippers_path, i, i, i+".usd")
-            if (os.path.exists(abs_path)) : 
-                self.gripper_dict[i] = abs_path
-            else: 
-                raise LookupError("Couldn't find gripper .usd file at " + abs_path)
-        
-        #print(self.gripper_dict)
+        i = self.gripper_names 
+        self.gripper_path = os.path.join(gripper_path, i, i, i+".usd")
+        if (os.path.exists(self.gripper_path)) : 
+            print("Found Gripper")
+        else: 
+            raise LookupError("Couldn't find gripper .usd file at " + self.gripper_path )
+        return
 
-    def _check_object_usd(self,objects_path):
+    def _check_object_usd(self,object_path):
         """ Check if the object usds are readable by program
         
         Args:
             objects_path: Path to directory containing all object files. Make sure every object.urdf is within a folder with the same name
         """
-        for i in self.object_names :
-            abs_path = os.path.join(objects_path, i, i+".usd")
-            if (os.path.exists(abs_path)) : 
-                print("adding path " + abs_path)
-                self.object_dict[i] = abs_path
-            else: 
-                raise LookupError("Couldn't find object .usd file for " + abs_path)
-        
-        #print(self.object_dict)
+        i = self.object_names
+        self.object_path = os.path.join(object_path, i, i+".usd")
+        if (os.path.exists(self.object_path)) : 
+            print("Found Object")
+        else: 
+            raise LookupError("Couldn't find object .usd file for " + self.object_path )
+        return
 
     def request_job(self):
         """ Function used by workstations to request job
