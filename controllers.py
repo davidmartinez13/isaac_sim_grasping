@@ -1,3 +1,4 @@
+# Every Controller must have same inputs
 from omni.isaac.core.controllers import BaseController, BaseGripperController
 from omni.isaac.core.utils.types import ArticulationActions
 import numpy as np
@@ -7,6 +8,14 @@ from omni.isaac.dynamic_control import _dynamic_control
 dc = _dynamic_control.acquire_dynamic_control_interface()
 
 class ForceController(BaseGripperController):
+    """ Force Controller Version 0
+
+    Args:
+        close_mask: dofs directions to close grippers 
+        test_time: total test time
+        max_effors: max_effort for Gripper "driving dofs"
+        robots: ArticulationView for Robots in simulation
+    """
     def __init__(self, close_mask, test_time, max_efforts,robots):
         name = "Controller"
         super().__init__(name=name)
@@ -43,8 +52,16 @@ class ForceController(BaseGripperController):
         self.last_actions = actions
         return actions
 
-
 class PositionController(BaseGripperController):
+    """ Force Controller Version 0
+
+    Args:
+        close_mask: dofs directions to close grippers 
+        test_time: total test time
+        max_effors: max_effort for Gripper "driving dofs"
+        robots: ArticulationView for Robots in simulation
+    """
+
     def __init__(self, close_mask, test_time, max_efforts, robots):
         name = "Controller"
         super().__init__(name=name)
@@ -67,3 +84,13 @@ class PositionController(BaseGripperController):
         # A controller has to return an ArticulationAction
         self.last_actions = actions
         return actions
+
+""" LIST OF CONTROLLERS: 
+They are the references used in command line to determine the controller to use
+"""
+controller_dict = {
+    'default': ForceController,
+    'force' : ForceController,
+    'position': PositionController
+}
+ 

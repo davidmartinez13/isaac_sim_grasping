@@ -1,19 +1,46 @@
-#launch Isaac Sim before any other imports
-#default first two lines in any standalone application
-from omni.isaac.kit import SimulationApp
-config= {
-    "headless": False,
-    'max_bounces':0,
-    'max_specular_transmission_bounces':0,
-}
-simulation_app = SimulationApp(config) # we can also run as headless.
-
 #External Libraries
 import numpy as np
 from tqdm import tqdm
 import os
-import sys
 import argparse
+
+def make_parser():
+    """ Input Parser """
+    parser = argparse.ArgumentParser(description='Standalone script for grasp filtering.')
+    parser.add_argument('--headless', type=bool, help='Running Program in headless mode',
+                        default=False, action = argparse.BooleanOptionalAction)
+    parser.add_argument('--json_dir', type=str, help='Directory of Grasp Information', default='')
+    parser.add_argument('--gripper_dir', type=str, help='Directory of Gripper urdf/usd', default='')
+    parser.add_argument('--objects_dir', type=str, help='Directory of Object usd', default='')
+    parser.add_argument('--output_dir', type=str, help='Output directroy for filterd grasps', default='')
+    parser.add_argument('--num_w', type=int, help='Number of Workstations used in the simulation', default=150)
+    parser.add_argument('--test_time', type=int, help='Total time for each grasp test', default=6)
+    parser.add_argument('--print_results', type=bool, help='Enable printing of grasp statistics after filtering a document',
+                         default=False, action = argparse.BooleanOptionalAction)
+    parser.add_argument('--controller', type=str,
+                        help='Gripper Controller to use while testing, should match the controller dictionary in the Manager Class',
+                        default='default')
+    parser.add_argument('--/log/level', type=str, help='isaac sim logging arguments', default='')
+    parser.add_argument('--/log/fileLogLevel', type=str, help='isaac sim logging arguments', default='')
+    parser.add_argument('--/log/outputStreamLevel', type=str, help='isaac sim logging arguments', default='')
+    return parser
+
+#Parser
+parser = make_parser()
+args = parser.parse_args()
+head = args.headless
+print(args.controller)
+
+#launch Isaac Sim before any other imports
+from omni.isaac.kit import SimulationApp
+config= {
+    "headless": head,
+    'max_bounces':0,
+    'fast_shutdown': True,
+    'max_specular_transmission_bounces':0
+}
+simulation_app = SimulationApp(config) # we can also run as headless.
+
 
 #World Imports
 from omni.isaac.core import World
@@ -22,18 +49,16 @@ from omni.isaac.cloner import GridCloner    # import Cloner interface
 from omni.isaac.core.utils.stage import add_reference_to_stage
 
 # Custom Classes
-from managerv2 import Manager
-#from workstationv2 import Workstation
-from controllersv2 import ForceController
+from manager import Manager
 from views import View
+
 #Omni Libraries
 from omni.isaac.core.utils.stage import add_reference_to_stage
 from omni.isaac.core.prims.rigid_prim import RigidPrim 
 from omni.isaac.core.prims.geometry_prim import GeometryPrim
 from omni.isaac.core.articulations import Articulation
-from omni.isaac.core.utils.prims import get_prim_children, get_prim_path
+from omni.isaac.core.utils.prims import get_prim_children, get_prim_path, delete_prim
 from omni.isaac.core.utils.transformations import pose_from_tf_matrix
-
 
 
 def import_gripper(work_path,usd_path, EF_axis):
@@ -106,23 +131,7 @@ def import_object(work_path, usd_path):
     return object_parent, mass
 
 
-def make_parser():
-    """ Input Parser """
-    parser = argparse.ArgumentParser(description='Standalone script for grasp filtering.')
-    parser.add_argument('--json_dir', type=str, help='Dir with Graspit Json Grasps', default='/home/ninad/isaac_sim_grasping/data/grasps/')
-    parser.add_argument('--gripper_dir', type=str, help='Dir with Gripper urdf/usd', default='/home/ninad/isaac_sim_grasping/grippers/')
-    parser.add_argument('--objects_dir', type=str, help='Dir with Object usd', default='/home/ninad/isaac_sim_grasping/data/object_usd/')
-    parser.add_argument('--output_dir', type=str, help='Output dir for jsons', default='/home/ninad/isaac_sim_grasping/data/output/')
-    parser.add_argument('--/log/level', type=str, help='isaac sim args', default='')
-    parser.add_argument('--/log/fileLogLevel', type=str, help='isaac sim args', default='')
-    parser.add_argument('--/log/outputStreamLevel', type=str, help='isaac sim args', default='')
-    return parser
-
-
 if __name__ == "__main__":
-    #Parser
-    parser = make_parser()
-    args = parser.parse_args()
     
     # Directories
     json_directory = args.json_dir
@@ -139,18 +148,20 @@ if __name__ == "__main__":
     elif not os.path.exists(output_directory): 
         raise ValueError("Output directory not given correctly")
 
-    # Testing Hyperparameters (More at manager.py)
-    num_w = 5
-    test_time = 6
-    fall_threshold = 2.5 #Just for final print (Not in json)
-    slip_threshold = 1 #Just for final print (Not in json)
+    # Testing Hyperparameters
+    num_w = args.num_w
+    test_time = args.test_time
+    verbose = args.print_results
+    controller = args.controller
+    physics_dt = 1/120
+
 
     #Debugging
-    render = True
+    render = not head
 
     #Load json files 
     json_files = [pos_json for pos_json in os.listdir(json_directory) if pos_json.endswith('.json')]
-    
+
     for j in json_files:
         #path to output .json file
         out_path = os.path.join(output_directory,j)
@@ -159,7 +170,7 @@ if __name__ == "__main__":
             continue
 
         # Initialize Manager
-        manager = Manager(os.path.join(json_directory,j), grippers_directory, objects_directory)   
+        manager = Manager(os.path.join(json_directory,j), grippers_directory, objects_directory, controller)   
 
         #initialize World 
         world = World(set_defaults = False)
@@ -200,7 +211,7 @@ if __name__ == "__main__":
         # Set desired physics Context options
         physicsContext = world.get_physics_context()
         world.reset()
-        physicsContext.set_physics_dt(manager.physics_dt)
+        physicsContext.set_physics_dt(physics_dt)
         physicsContext.enable_gpu_dynamics(True)
         physicsContext.set_gravity(0)
         physicsContext.set_solver_type("PGS")
@@ -218,14 +229,17 @@ if __name__ == "__main__":
                 if pbar.n != np.sum(manager.completed): #Progress bar
                     pbar.update(np.sum(manager.completed)-pbar.n)
         
-        
+        # Pause world
+        #world.pause()
         #Save new json with results
         manager.save_json(out_path)
-
+        if (verbose):
+            manager.report_results()
+        print("Reseting Environment")
         #Reset World
         world.stop()
-        world.clear_all_callbacks()
+        world.clear_physics_callbacks()
         world.clear()
-        manager.report_results(fall_threshold,slip_threshold)
 
+        
     simulation_app.close() # close Isaac Sim

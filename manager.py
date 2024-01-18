@@ -1,23 +1,24 @@
 import numpy as np
 import pandas as pd
 import os
-from controllersv2 import ForceController,PositionController
+from controllers import controller_dict
 import utils
 import json
 
 class Manager:
     """ Grasp Data Manager:
-    Manages the information of all grippers, controllers and the reporting of results (Verbosity and saving)
-    This class takes in a specific .json structure, if it is desired to change the .json format, this is the place to make
-    the simulation compatible to the new format.
+    Manages the information of all grippers, grasps and the reporting of results (Verbosity and saving)
+    This class takes in a specific .json structure, if it is desired to change the .json format, this 
+    is the place to make the simulation compatible to the new format.
 
     Args:
         grasps_path: .json file containing the grasp information.
         grippers_path: folder path for all the gripper .usd folders
         objects_path: folder path for all the object .urdf files
+        controller: specified controller to use in grippers
         world: Isaac Sim World object
     """
-    def __init__(self, grasps_path, grippers_path, objects_path,
+    def __init__(self, grasps_path, grippers_path, objects_path, controller= 'default',
                  world=None):
         # Loading files and urdfs
         self.world = world
@@ -26,38 +27,39 @@ class Manager:
         self.gripper = self.json.iloc[0]['gripper']
         self.object = self.json.iloc[0]['object_id']
 
-        #Translate DoFs Info
+        #Translate GraspIt DoFs Information
         self.pickle_file_data = utils.load_pickle(os.path.join(grippers_path, "gripper_pyb_info.pk"))
 
         # Extract grasps and reorder quaternions
         self.grasps = []
         self.dofs = []
-        for i, r in self.json.iterrows():
+        for i, r in self.json.iterrows(): 
             self.grasps.append(r['grasps']['pose'])
             self.dofs.append(r['grasps']['dofs'])
         self.dofs = np.asarray(self.dofs)
         self.grasps = np.asarray(self.grasps)
         self.grasps[:,[3,4,5,6]]= self.grasps[:,[6,3,4,5]]
 
-        # Initialize dictionaries (paths to objects and grippers)
+        # Check for usds Object's and Gripper's
         self._check_gripper_usd(grippers_path)
         self._check_object_usd(objects_path)
 
+        # Verbosity of json data loading
         self.n_jobs = self.grasps.shape[0]
         print("Number of Grasps: " + str(self.n_jobs))
 
-        #GRIPPER SPECIFIC DATA
+        # GRIPPER SPECIFIC DATA
         self._init_gripper_dicts()
         
-        # Extract info from dicts
-        self.controller = self.controllers[self.gripper]
+        # Extract info from dictionaries external and internal
+        self.controller = controller_dict[controller]
         self.close_mask = self.close_dir[self.gripper]
         self.contact_th = self.contact_ths[self.gripper]
         self.physics_dt = self.dts[self.gripper]
         self.c_names = self.contact_names[self.gripper]
         self.EF_axis = self.EF_axes[self.gripper]
 
-        #Pointer and reporting vars
+        #Pointer and result vars
         self.job_pointer = 0 # Start to 0
         self.test_type = np.asarray([None] * len(self.grasps))
         self.total_test_time = np.zeros(len(self.grasps))
@@ -68,7 +70,7 @@ class Manager:
 
     def _init_gripper_dicts(self):
         """ GRIPPER INFORMATION INITIALIZATION
-        Any new gripper should have its information added here
+        Every gripper should have its information added here
         
         """
         #End effector axis (+/- 1,2,3) x,y, z respectively
@@ -99,20 +101,7 @@ class Manager:
             "HumanHand": 1/80
         }
 
-        #Controllers Used for specific grippers
-        self.controllers= {
-            "fetch_gripper" : PositionController,
-            "franka_panda": PositionController, 
-            "sawyer": PositionController,
-            "wsg_50": PositionController, 
-            "Barrett": PositionController,
-            "jaco_robot": PositionController,
-            "robotiq_3finger": PositionController,
-            "Allegro": PositionController,
-            "HumanHand": PositionController,
-            "shadow_hand": PositionController
-        }
-
+        # Direction for DoFs to close gripper
         self.close_dir= {
             "fetch_gripper" : [1,1],
             "franka_panda": [-1, -1], # NOTE, franka_panda gripper by default is closed, so need to open before, Opendir = [1, 1]
@@ -126,7 +115,7 @@ class Manager:
             "shadow_hand": [0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         }
 
-        #List of names of joints to check for collisions it must be as specified in the .usd of the gripper
+        #List of names of joints to check for collisions; it must be as specified in the .usd of the gripper
         self.contact_names= { 
             "fetch_gripper" : ["l_gripper_finger_link_joint","r_gripper_finger_link_joint"],
             "franka_panda": ["panda_hand", "panda_leftfinger", "panda_rightfinger"], 
@@ -162,7 +151,6 @@ class Manager:
             "shadow_hand": 2
         }
 
-
     def _check_gripper_usd(self,gripper_path):
         """ Check if the gripper usd exist
 
@@ -191,7 +179,10 @@ class Manager:
         return
 
     def request_jobs(self, n):
-        """ Function used by views.py to request job
+        """ Function used by workstations class to request jobs
+
+        Args: 
+            n: number of new jobs required
         """
         job_IDs = []
         tmp = []
@@ -216,8 +207,7 @@ class Manager:
         """ Function to translate the GraspIt dofs to Isaac Sim dofs
         
         Args: 
-            gripper: name of the gripper to translate dofs
-            dofs: np array of dofs to translate
+            robot_idx: List of dofs indices names of the grippers given by Isaac Sim
         """
         json_idx = self.pickle_file_data[self.gripper][1]
 
@@ -269,7 +259,7 @@ class Manager:
         return robot_pos
 
     def report_fall(self, job_ID, value,test_type, test_time):
-        """ Reports falls of objects (used in view.py)
+        """ Reports falls of objects in grasp tests
         
         Args:
             job_ID: IDs of workstations where objects fell
@@ -306,21 +296,24 @@ class Manager:
         return
     
     def save_json(self,output_path):
-        """ Saves json on disk
+        """ Saves json on disk.
 
         Args: 
             out_path: path to save json at
         
         """
         print("Saving File at: ",output_path)
-        self.json["test_type"] = self.test_type
-        self.json["total_test_time"] = self.total_test_time
-        self.json["fall_time"] = self.fall_time
-        self.json["slip_time"] = self.slip_time
-        self.json.to_json(output_path)
+        self.new_json = pd.DataFrame()
+        self.new_json['pose'] = self.grasps.tolist()
+        self.new_json['dofs'] = self.dofs.tolist()
+        self.new_json["test_type"] = self.test_type
+        self.new_json["total_test_time"] = self.total_test_time
+        self.new_json["fall_time"] = self.fall_time
+        self.new_json["slip_time"] = self.slip_time
+        self.new_json.to_json(output_path)
         return
 
-    def report_results(self,ft, st):
+    def report_results(self,ft=2, st=1):
         """ Verbosity for results of .json file filter
 
         Args:
@@ -332,7 +325,9 @@ class Manager:
         print("Total Test Time: " +str(self.total_test_time[0]))
         print("Fall Tests Passed (th = " +str(ft)+ "): "+ str(passed))
         print("Mean: " +str(round(np.mean(self.fall_time[self.fall_time>0]),3)) + "-- Std: " +str(round(np.std(self.fall_time[self.fall_time>0]),3)) + "-- Variance: " +str(round(np.var(self.fall_time[self.fall_time>0]),3)))
+        print("Max: "+ str(round(np.max(self.fall_time),3)) + " -- Min: " + str(round(np.min(self.fall_time[self.fall_time>0]),3)))
         passed = (self.slip_time > st).sum()
         print("Slip Tests Passed (th = " +str(st)+ "): "+ str(passed))
         print("Mean: " +str(round(np.mean(self.slip_time),3)) + "-- Std: " +str(round(np.std(self.slip_time),3)) + "-- Variance: " +str(round(np.var(self.slip_time),3)))
+        print("Max: "+ str(round(np.max(self.slip_time),3)) + " -- Min: " + str(round(np.min(self.slip_time),3)))
         return
