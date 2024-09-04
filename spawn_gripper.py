@@ -49,7 +49,7 @@ def make_parser():
                         default=os.path.join(user_home, 'Documents/Dataset/objects_usd/google_objects_usd'))
     parser.add_argument('--output_dir', type=str, help='Output directory for filtered grasps',
                         default=os.path.join(user_home, 'Documents/Dataset'))
-    parser.add_argument('--num_w', type=int, help='Number of Workstations used in the simulation', default=100)
+    parser.add_argument('--num_w', type=int, help='Number of Workstations used in the simulation', default=2)
     parser.add_argument('--device', type=int, help='Gpu to use', default=0)
     parser.add_argument('--test_time', type=int, help='Total time for each grasp test', default=3)
     parser.add_argument('--print_results', type=bool, help='Enable printing of grasp statistics after filtering a document',
@@ -220,7 +220,8 @@ if __name__ == "__main__":
         #path to output .json file
         out_path = os.path.join(output_directory,j)
 
-        if(os.path.exists(out_path)): #Skip completed
+        is_debug = True
+        if(os.path.exists(out_path) and not is_debug): #Skip completed
             continue
 
         # Initialize Manager

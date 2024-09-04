@@ -189,8 +189,8 @@ if __name__ == "__main__":
     for j in json_files:
         #path to output .json file
         out_path = os.path.join(output_directory,j)
-
-        if(os.path.exists(out_path)): #Skip completed
+        is_debug = True
+        if(os.path.exists(out_path) and not is_debug): #Skip completed
             continue
 
         # Initialize Manager
