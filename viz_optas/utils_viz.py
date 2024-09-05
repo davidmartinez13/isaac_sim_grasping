@@ -31,6 +31,8 @@ def get_urdf_path(gripper_name):
         return "sawyer/sawyer.urdf"
     elif gripper_name == "h5_hand":
         return "h5_hand/h5_hand.urdf"
+    elif gripper_name == "hithand":
+        return "hithand/hithand_.urdf"
     else:
         print("[ERROR]: INVALID Gripper name. Returning empty string!!!")
         return ""
@@ -301,6 +303,9 @@ def get_gripper_common_alignment(gname: str):
         return quaternion.from_euler_angles([0, math.pi / 2.0, 0])
     elif gname == "HumanHand":
         return quaternion.from_euler_angles([0, math.pi / 2.0, -math.pi / 2.0])
+    elif gname == "hithand":
+        return quaternion.from_euler_angles([-math.pi / 2.0, -math.pi / 2.0, 0.0])
+        # return np.quaternion(1, 0, 0, 0)
     elif gname == "Allegro":
         return quaternion.from_euler_angles([-math.pi / 2.0, -math.pi / 2.0, 0])
     elif gname == "shadow_hand":
@@ -347,6 +352,8 @@ def get_gripper_palm_position(gname: str):
         return -1 * np.array([0.102, 0, 0])
     elif gname == "HumanHand":
         return -1 * np.array([0.1, 0.02, 0])
+    elif gname == "hithand":
+        return -1 * np.array([-0.01, -0.01, -0.2])
     elif gname == "Allegro":
         return -1 * np.array([0, 0, 0.03])  # or [-0.01, 0, 0.03]
     elif gname == "shadow_hand":

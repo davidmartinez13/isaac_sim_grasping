@@ -47,8 +47,9 @@ def make_args():
         "-g",
         "--gripper",
         type=str,
-        required=True,
+        required=False,
         help="Gripper name",
+        default="hithand"
     )
     parser.add_argument(
         "-l",
@@ -66,7 +67,7 @@ if __name__ == "__main__":
     gripper_name = args.gripper
     line_width = args.linewidth
     assert line_width > 0
-    gripper_urdf_root = "./data/grippers"
+    gripper_urdf_root = "./grippers"
     gripper_urdf_path = os.path.join(gripper_urdf_root, get_urdf_path(gripper_name))
     robot_model = optas.RobotModel(urdf_filename=gripper_urdf_path)
 
