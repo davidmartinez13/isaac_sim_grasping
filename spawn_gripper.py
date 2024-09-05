@@ -42,14 +42,14 @@ def make_parser():
     parser.add_argument('--force_reset', type=bool, help='Force Reset of Isaac Sim',
                         default=False, action=argparse.BooleanOptionalAction)
     parser.add_argument('--json_dir', type=str, help='Directory of Grasp Information',
-                        default=os.path.join(user_home, 'Documents/Dataset/graspit_grasps/hithand'))
+                        default=os.path.join(user_home, 'Documents/Dataset/hithand_transfered'))
     parser.add_argument('--gripper_dir', type=str, help='Directory of Gripper urdf/usd',
                         default=os.path.join(user_home, 'isaac_sim_grasping/grippers'))
     parser.add_argument('--objects_dir', type=str, help='Directory of Object usd',
                         default=os.path.join(user_home, 'Documents/Dataset/objects_usd/google_objects_usd'))
     parser.add_argument('--output_dir', type=str, help='Output directory for filtered grasps',
-                        default=os.path.join(user_home, 'Documents/Dataset'))
-    parser.add_argument('--num_w', type=int, help='Number of Workstations used in the simulation', default=2)
+                        default=os.path.join(user_home, 'Documents/Dataset/graspit_grasps/hithand'))
+    parser.add_argument('--num_w', type=int, help='Number of Workstations used in the simulation', default=10)
     parser.add_argument('--device', type=int, help='Gpu to use', default=0)
     parser.add_argument('--test_time', type=int, help='Total time for each grasp test', default=3)
     parser.add_argument('--print_results', type=bool, help='Enable printing of grasp statistics after filtering a document',
@@ -216,12 +216,14 @@ if __name__ == "__main__":
     #Load json files 
     json_files = [pos_json for pos_json in os.listdir(json_directory) if pos_json.endswith('.json')]
     print(json_files)
+    print("About to try:" ,len(json_files)," objects.")
     for j in json_files:
         #path to output .json file
         out_path = os.path.join(output_directory,j)
-
-        is_debug = True
+        print("Now trying: ", out_path)
+        is_debug = False
         if(os.path.exists(out_path) and not is_debug): #Skip completed
+            print("Output grasps already exist")
             continue
 
         # Initialize Manager

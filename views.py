@@ -140,6 +140,13 @@ class View():
             if(len(finish_ind)>0):
                 self.test_finish(finish_ind)
             
+            # Check for penetration (hand model penetrating the object)
+            for ind in active_ind:
+                contact_forces = self.objects.get_net_contact_forces(indices=[ind])
+                if contact_forces is not None and np.any(contact_forces < -1.0):
+                    self.test_finish([ind])
+                    break
+            
         # Apply gravity to ready grasps
         tmp_active = np.squeeze(self.current_job_IDs>=0)
         g_ind = np.argwhere(np.multiply(np.squeeze((self.grasp_set_up==1)),tmp_active) ==1)[:,0] # optimizable

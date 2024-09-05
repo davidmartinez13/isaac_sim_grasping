@@ -1,6 +1,6 @@
 {
 "hithand": {
-    "EF_axis": 3, 
+    "EF_axis": 1, 
     "physics_frequency": 240,
     "close_dir": [
     0, 0, 0, 0, 0, 
@@ -28,13 +28,13 @@
     "Right_Index_1", "Right_Little_1", "Right_Middle_1", "Right_Ring_1", "Right_Thumb_1", 
     "Right_Index_2", "Right_Little_2", "Right_Middle_2", "Right_Ring_2", "Right_Thumb_2", 
     "Right_Index_3", "Right_Little_3", "Right_Middle_3", "Right_Ring_3", "Right_Thumb_3"],
-    "contact_th":2,
+    "contact_th":3,
     "transfer_close_dir": [
     0, 0, 0, 0, 0, 
     2, 2, 2, 2, 2, 
     2, 2, 2, 2, 2, 
     0, 0, 0, 0, 0],
-    "transfer_contact_th": 2,
+    "transfer_contact_th": 3,
     "opened_dofs": [
     0.0021863764906449035, 0.0015693077377321174, -3.5539204379375633e-07, 0.0001969499570657618, 
     0.0017431302620041222, 0.0017067684008464923, -2.9671970342981524e-05, -7.748572175625412e-05, 
