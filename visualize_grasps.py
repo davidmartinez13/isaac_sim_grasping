@@ -7,22 +7,26 @@ import time
 
 def make_parser():
     """ Input Parser """
+    user_home = os.path.expanduser("~")
     parser = argparse.ArgumentParser(description='Visualization script for filtered grasps.')
-    parser.add_argument('--json_dir', type=str, help='Directory of Grasp Information', default='')
-    parser.add_argument('--gripper_dir', type=str, help='Directory of Gripper urdf/usd', default='')
-    parser.add_argument('--objects_dir', type=str, help='Directory of Object usd', default='')
-    parser.add_argument('--num_w', type=int, help='Number of Workstations used in the simulation', default=15)
+    parser.add_argument('--json_dir', type=str, help='Directory of Grasp Information',
+                        default=os.path.join(user_home, 'Documents/Dataset/graspit_grasps/hithand'))
+    parser.add_argument('--gripper_dir', type=str, help='Directory of Gripper urdf/usd',
+                        default=os.path.join(user_home, 'isaac_sim_grasping/grippers'))
+    parser.add_argument('--objects_dir', type=str, help='Directory of Object usd',
+                        default=os.path.join(user_home, 'Documents/Dataset/objects_usd/google_objects_usd'))
+    parser.add_argument('--num_w', type=int, help='Number of Workstations used in the simulation', default=2)
     parser.add_argument('--device', type=int, help='Gpu to use', default=0)
     parser.add_argument('--controller', type=str,
                         help='Gripper Controller to use while testing, should match the controller dictionary in the Manager Class',
                         default='default')
     parser.add_argument('--transfer', type=bool, help='Indicate if file is a transfer file',
-                         default=False, action = argparse.BooleanOptionalAction)
+                         default=True, action = argparse.BooleanOptionalAction)
     parser.add_argument('--lb', type=int, help='Lower bound for visualization', default=None)
     parser.add_argument('--ub', type=int, help='Upper bound for visualization', default=None)
-    parser.add_argument('--/log/level', type=str, help='isaac sim logging arguments', default='', required=False)
-    parser.add_argument('--/log/fileLogLevel', type=str, help='isaac sim logging arguments', default='', required=False)
-    parser.add_argument('--/log/outputStreamLevel', type=str, help='isaac sim logging arguments', default='', required=False)
+    parser.add_argument('--/log/level', type=str, help='Isaac Sim logging arguments', default='error', required=False)
+    parser.add_argument('--/log/fileLogLevel', type=str, help='Isaac Sim logging arguments', default='error', required=False)
+    parser.add_argument('--/log/outputStreamLevel', type=str, help='Isaac Sim logging arguments', default='error', required=False)
     
     return parser
 

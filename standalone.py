@@ -9,16 +9,21 @@ import time
 
 def make_parser():
     """ Input Parser """
+    user_home = os.path.expanduser("~")
     parser = argparse.ArgumentParser(description='Standalone script for grasp filtering.')
     parser.add_argument('--headless', type=bool, help='Running Program in headless mode',
                         default=False, action = argparse.BooleanOptionalAction)
     parser.add_argument('--force_reset', type=bool, help='Force Reset of Isaac Sim',
                         default=False, action = argparse.BooleanOptionalAction)
-    parser.add_argument('--json_dir', type=str, help='Directory of Grasp Information', default='')
-    parser.add_argument('--gripper_dir', type=str, help='Directory of Gripper urdf/usd', default='')
-    parser.add_argument('--objects_dir', type=str, help='Directory of Object usd', default='')
-    parser.add_argument('--output_dir', type=str, help='Output directroy for filterd grasps', default='')
-    parser.add_argument('--num_w', type=int, help='Number of Workstations used in the simulation', default=150)
+    parser.add_argument('--json_dir', type=str, help='Directory of Grasp Information',
+                        default=os.path.join(user_home, 'Documents/Dataset/hithand_transfered'))
+    parser.add_argument('--gripper_dir', type=str, help='Directory of Gripper urdf/usd',
+                        default=os.path.join(user_home, 'isaac_sim_grasping/grippers'))
+    parser.add_argument('--objects_dir', type=str, help='Directory of Object usd',
+                        default=os.path.join(user_home, 'Documents/Dataset/objects_usd/google_objects_usd'))
+    parser.add_argument('--output_dir', type=str, help='Output directory for filtered grasps',
+                        default=os.path.join(user_home, 'Documents/Dataset/hithand_filtered'))
+    parser.add_argument('--num_w', type=int, help='Number of Workstations used in the simulation', default=10)
     parser.add_argument('--device', type=int, help='Gpu to use', default=0)
     parser.add_argument('--test_time', type=int, help='Total time for each grasp test', default=3)
     parser.add_argument('--print_results', type=bool, help='Enable printing of grasp statistics after filtering a document',
@@ -26,9 +31,9 @@ def make_parser():
     parser.add_argument('--controller', type=str,
                         help='Gripper Controller to use while testing, should match the controller dictionary in the Manager Class',
                         default='default')
-    parser.add_argument('--/log/level', type=str, help='isaac sim logging arguments', default='', required=False)
-    parser.add_argument('--/log/fileLogLevel', type=str, help='isaac sim logging arguments', default='', required=False)
-    parser.add_argument('--/log/outputStreamLevel', type=str, help='isaac sim logging arguments', default='', required=False)
+    parser.add_argument('--/log/level', type=str, help='Isaac Sim logging arguments', default='error', required=False)
+    parser.add_argument('--/log/fileLogLevel', type=str, help='Isaac Sim logging arguments', default='error', required=False)
+    parser.add_argument('--/log/outputStreamLevel', type=str, help='Isaac Sim logging arguments', default='error', required=False)
     
     return parser
 

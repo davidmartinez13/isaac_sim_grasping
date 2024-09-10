@@ -474,6 +474,7 @@ for gripper in grippers:
         new_json['gripper'] = gripper
         new_json['object_id'] = obj
         new_json['pose'] = transformed_pose.tolist()
+        new_json['dofs'] = np.zeros((pose_shape[0],20)).tolist()
         new_json['og_gripper'] = tmp_og.tolist()   
 
         # Write the transformed data to a new JSON file
