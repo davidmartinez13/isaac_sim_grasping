@@ -75,8 +75,16 @@ import_config.distance_scale = 1
 import_config.density = 0.0
 
 # Set the base directory where the objects are located
-base_dir = "/home/dm/panda_ws/gazebo-objects/objects_gazebo/kit"
-
+# base_dir = "/home/dm/panda_ws/gazebo-objects/objects_gazebo/kit"
+base_dir = "/home/dm/panda_ws/gazebo-objects/objects_gazebo/ycb"
+# base_dir = "/home/dm/panda_ws/gazebo-objects/objects_gazebo/bigbird"
+# material_png = "material0.png" #for kit
+material_png = "texture_map.png" #for ycb
+is_add_material = True # for kit,ycb
+# is_add_material = False # for bigbird since it adds it directly
+# material_prim_name = "material_material0" #for kit
+# material_prim_name = "material_material_0" #for ycb
+material_prim_name = "material_DefaultMaterial" #for ycb
 for object_name in os.listdir(base_dir):
     object_dir = os.path.join(base_dir, object_name)
     if os.path.isdir(object_dir):
@@ -96,7 +104,7 @@ for object_name in os.listdir(base_dir):
             )
 
             # Modify the USDA file to add texture material0.png
-            if os.path.isfile(usd_file):
+            if os.path.isfile(usd_file) and is_add_material:
                 print("Modifying USDA {}".format(usd_file))
 
                 # Load the USDA stage
@@ -104,7 +112,7 @@ for object_name in os.listdir(base_dir):
 
                 # Iterate over the prims in the stage
                 for prim in stage.Traverse():
-                    if prim.GetName() == "material_material0":
+                    if prim.GetName() == material_prim_name or prim.GetName() == "material_material_0":
                         shader_prim = stage.GetPrimAtPath(prim.GetPath().AppendPath("Shader"))
                         shader_attrs = shader_prim.GetAttributes()
 
@@ -112,7 +120,12 @@ for object_name in os.listdir(base_dir):
                         if shader_prim.HasAttribute("inputs:diffuse_color_constant"):
                             # Create or modify the diffuse_texture attribute
                             diffuse_texture_attr = shader_prim.CreateAttribute("inputs:diffuse_texture", Sdf.ValueTypeNames.Asset)
-                            diffuse_texture_attr.Set(os.path.join(object_dir, "material0.png"))
+                            material_path = os.path.join(object_dir, material_png)
+                            if os.path.isfile(material_path):
+                                diffuse_texture_attr.Set(material_path)
+                            else:
+                                material_path = os.path.join(object_dir, "textured.png")
+                                diffuse_texture_attr.Set(material_path)
                             print("Added diffuse texture to {}".format(prim.GetPath()))
 
                 # Save the modified USDA
