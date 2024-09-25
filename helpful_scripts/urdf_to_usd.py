@@ -6,29 +6,6 @@ import argparse
 import sys
 import time
 
-# def make_parser():
-#     """ Input Parser """
-#     parser = argparse.ArgumentParser(description='Standalone script for grasp filtering.')
-#     parser.add_argument('--headless', type=bool, help='Running Program in headless mode',
-#                         default=False, action = argparse.BooleanOptionalAction)
-#     parser.add_argument('--force_reset', type=bool, help='Force Reset of Isaac Sim',
-#                         default=False, action = argparse.BooleanOptionalAction)
-#     parser.add_argument('--json_dir', type=str, help='Directory of Grasp Information', default='')
-#     parser.add_argument('--gripper_dir', type=str, help='Directory of Gripper urdf/usd', default='')
-#     parser.add_argument('--objects_dir', type=str, help='Directory of Object usd', default='')
-#     parser.add_argument('--output_dir', type=str, help='Output directroy for filterd grasps', default='')
-#     parser.add_argument('--num_w', type=int, help='Number of Workstations used in the simulation', default=150)
-#     parser.add_argument('--device', type=int, help='Gpu to use', default=0)
-#     parser.add_argument('--test_time', type=int, help='Total time for each grasp test', default=3)
-#     parser.add_argument('--print_results', type=bool, help='Enable printing of grasp statistics after filtering a document',
-#                          default=False, action = argparse.BooleanOptionalAction)
-#     parser.add_argument('--controller', type=str,
-#                         help='Gripper Controller to use while testing, should match the controller dictionary in the Manager Class',
-#                         default='transfer_default')
-#     parser.add_argument('--/log/level', type=str, help='isaac sim logging arguments', default='', required=False)
-#     parser.add_argument('--/log/fileLogLevel', type=str, help='isaac sim logging arguments', default='', required=False)
-#     parser.add_argument('--/log/outputStreamLevel', type=str, help='isaac sim logging arguments', default='', required=False)
-#     return parser
 def make_parser():
     """ Input Parser """
     # Get the current user's home directory
@@ -97,25 +74,6 @@ import_config.default_drive_type = _urdf.UrdfJointTargetType.JOINT_DRIVE_POSITIO
 import_config.distance_scale = 1
 import_config.density = 0.0
 
-# omni.kit.commands.execute('SetLightingMenuModeCommand',
-# 	lighting_mode='stage',
-# 	usd_context_name='')
-
-# omni.kit.commands.execute('CreatePrim',
-# 	prim_path='/Environment',
-# 	prim_type='Xform',
-# 	select_new_prim=False,
-# 	create_default_xform=True,
-# 	context_name='')
-
-# omni.kit.commands.execute('CreatePrim',
-# 	prim_path='/Environment/defaultLight',
-# 	prim_type='DistantLight',
-# 	select_new_prim=False,
-# 	attributes={'inputs:angle': 1.0, 'inputs:intensity': 3000},
-# 	create_default_xform=True,
-# 	context_name='')
-
 # Set the base directory where the objects are located
 base_dir = "/home/dm/panda_ws/gazebo-objects/objects_gazebo/kit"
 
@@ -123,16 +81,46 @@ for object_name in os.listdir(base_dir):
     object_dir = os.path.join(base_dir, object_name)
     if os.path.isdir(object_dir):
         urdf_file = os.path.join(object_dir, "{}.urdf".format(object_name))
-        usd_file = os.path.join(object_dir, "{}/{}.usda".format(object_name, object_name))
+        usd_file = os.path.join(object_dir, "{}/{}.usd".format(object_name, object_name))
+        # usd_file = os.path.join(object_dir, "{}/{}.usda".format(object_name, object_name))
 
         if os.path.isfile(urdf_file):
             print("Processing {}".format(object_name))
-            result, prim_path = omni.kit.commands.execute('URDFParseAndImportFile',
-			urdf_path=urdf_file,
-			import_config=import_config,
-			# import_config=<omni.importer.urdf._urdf.ImportConfig object at 0x792faa788170>,
-			dest_path=usd_file
-			)
+            
+            # Convert URDF to USDA
+            result, prim_path = omni.kit.commands.execute(
+                'URDFParseAndImportFile',
+                urdf_path=urdf_file,
+                import_config=import_config,
+                dest_path=usd_file
+            )
+
+            # Modify the USDA file to add texture material0.png
+            if os.path.isfile(usd_file):
+                print("Modifying USDA {}".format(usd_file))
+
+                # Load the USDA stage
+                stage = Usd.Stage.Open(usd_file)
+
+                # Iterate over the prims in the stage
+                for prim in stage.Traverse():
+                    if prim.GetName() == "material_material0":
+                        shader_prim = stage.GetPrimAtPath(prim.GetPath().AppendPath("Shader"))
+                        shader_attrs = shader_prim.GetAttributes()
+
+                        # Check if the diffuse color is present, and if so, add the texture
+                        if shader_prim.HasAttribute("inputs:diffuse_color_constant"):
+                            # Create or modify the diffuse_texture attribute
+                            diffuse_texture_attr = shader_prim.CreateAttribute("inputs:diffuse_texture", Sdf.ValueTypeNames.Asset)
+                            diffuse_texture_attr.Set(os.path.join(object_dir, "material0.png"))
+                            print("Added diffuse texture to {}".format(prim.GetPath()))
+
+                # Save the modified USDA
+                stage.GetRootLayer().Save()
+                print("Texture added to USDA {}".format(usd_file))
+
+            else:
+                print("USDA file not found for {}".format(object_name))
             
 # omni.kit.commands.execute('URDFParseAndImportFile',
 # 	urdf_path='/home/dm/panda_ws/gazebo-objects/objects_gazebo/kit/BakingVanilla/BakingVanilla.urdf',
