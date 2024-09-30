@@ -66,6 +66,7 @@ import_config.convex_decomp = False
 import_config.fix_base = True
 import_config.make_default_prim = True
 import_config.self_collision = False
+import_config.make_instanceable = True
 import_config.create_physics_scene = True
 import_config.import_inertia_tensor = False
 import_config.default_drive_strength = 10000.0
@@ -73,18 +74,26 @@ import_config.default_position_drive_damping = 1000.0
 import_config.default_drive_type = _urdf.UrdfJointTargetType.JOINT_DRIVE_POSITION
 import_config.distance_scale = 1
 import_config.density = 0.0
+# dataset_name = "bigbird"
+# dataset_name = "kit"
+dataset_name = "ycb"
+
+if dataset_name == "ycb":
+    is_add_material = True # for kit,ycb
+    material_png = "texture_map.png" #for ycb
+    material_prim_name = "material_material_0" #for ycb
+
+elif dataset_name == "kit":
+    is_add_material = True # for kit,ycb
+    material_png = "material0.png" #for kit
+    material_prim_name = "material_material0" #for kit
+
+elif dataset_name == "bigbird":
+    is_add_material = False # for bigbird since it adds it directly
 
 # Set the base directory where the objects are located
-# base_dir = "/home/dm/panda_ws/gazebo-objects/objects_gazebo/kit"
-base_dir = "/home/dm/panda_ws/gazebo-objects/objects_gazebo/ycb"
-# base_dir = "/home/dm/panda_ws/gazebo-objects/objects_gazebo/bigbird"
-# material_png = "material0.png" #for kit
-material_png = "texture_map.png" #for ycb
-is_add_material = True # for kit,ycb
-# is_add_material = False # for bigbird since it adds it directly
-# material_prim_name = "material_material0" #for kit
-# material_prim_name = "material_material_0" #for ycb
-material_prim_name = "material_DefaultMaterial" #for ycb
+base_dir = "/home/dm/panda_ws/gazebo-objects/objects_gazebo/" + dataset_name
+
 for object_name in os.listdir(base_dir):
     object_dir = os.path.join(base_dir, object_name)
     if os.path.isdir(object_dir):
@@ -108,11 +117,15 @@ for object_name in os.listdir(base_dir):
                 print("Modifying USDA {}".format(usd_file))
 
                 # Load the USDA stage
-                stage = Usd.Stage.Open(usd_file)
+                if import_config.make_instanceable == True:
+                    usd_file = os.path.join(object_dir, "instanceable_meshes.usd")
+                    stage = Usd.Stage.Open(usd_file)
+                else:
+                    stage = Usd.Stage.Open(usd_file)
 
                 # Iterate over the prims in the stage
                 for prim in stage.Traverse():
-                    if prim.GetName() == material_prim_name or prim.GetName() == "material_material_0":
+                    if prim.GetName() == material_prim_name or prim.GetName() == "material_DefaultMaterial":
                         shader_prim = stage.GetPrimAtPath(prim.GetPath().AppendPath("Shader"))
                         shader_attrs = shader_prim.GetAttributes()
 
