@@ -89,8 +89,8 @@ for object_name in os.listdir(base_dir):
     object_dir = os.path.join(base_dir, object_name)
     if os.path.isdir(object_dir):
         urdf_file = os.path.join(object_dir, "{}.urdf".format(object_name))
-        usd_file = os.path.join(object_dir, "{}/{}.usd".format(object_name, object_name))
-        # usd_file = os.path.join(object_dir, "{}/{}.usda".format(object_name, object_name))
+        usd_file = os.path.join(object_dir, "{}.usd".format(object_name, object_name))
+        # usd_file = os.path.join(object_dir, "{}.usda".format(object_name, object_name))
 
         if os.path.isfile(urdf_file):
             print("Processing {}".format(object_name))
