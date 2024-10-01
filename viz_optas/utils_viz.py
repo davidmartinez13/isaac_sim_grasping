@@ -353,7 +353,7 @@ def get_gripper_palm_position(gname: str):
     elif gname == "HumanHand":
         return -1 * np.array([0.1, 0.02, 0])
     elif gname == "hithand":
-        return -1 * np.array([-0.01, -0.01, -0.2])
+        return -1 * np.array([-0.01, -0.01, -0.1])
     elif gname == "Allegro":
         return -1 * np.array([0, 0, 0.03])  # or [-0.01, 0, 0.03]
     elif gname == "shadow_hand":
