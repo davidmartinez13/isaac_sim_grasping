@@ -2,8 +2,8 @@ import argparse
 import numpy as np
 
 from renderer import Renderer
-
-
+# command:
+# python viz_optas/vis_single_pair.py --model_dir ~/panda_ws/gazebo-objects/objects_gazebo/kit -f ~/panda_ws/inference_container/Multifinger-Net-dev --gripper hithand --model BakingVanilla
 def make_args():
     parser = argparse.ArgumentParser(
         description="Generate grid and spawn objects", add_help=True

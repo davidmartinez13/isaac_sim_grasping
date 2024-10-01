@@ -42,7 +42,7 @@ class Renderer:
             camera_position=cam_pos,
             camera_focal_point=cam_focus,
         )
-        self.gripper_urdf_root = "./data/grippers"
+        self.gripper_urdf_root = "./grippers"
 
     def _get_urdf_path(self, gripper_name):
         return os.path.join(self.gripper_urdf_root, get_urdf_path(gripper_name))
@@ -79,6 +79,11 @@ class Renderer:
         }:
             obj_mesh_f = os.path.join(model_data_path, "textured_simple.obj")
             texture_f = os.path.join(model_data_path, "texture_map.png")
+        elif model_name in {
+            "BakingVanilla",
+        }:
+            obj_mesh_f = os.path.join(model_data_path, "BakingVanilla_25k_tex.obj")
+            texture_f = os.path.join(model_data_path, "material0.png")
         else:
             obj_mesh_f = os.path.join(model_data_path, "meshes", "model.obj")
             texture_f = os.path.join(
