@@ -198,7 +198,15 @@ All the files provided within this repository and in the [[dataset folder](https
 https://github.com/IRVLUTD/isaac_sim_grasping/blob/a7207a100e0940b5103bb407ad0676c5771c0a83/managers.py#L246-L277
 
 Note: To reproduce the transferred grasp results the same must be done with the transfer manager class [T_manager](https://github.com/IRVLUTD/isaac_sim_grasping/blob/b6b72b51359c6d2c0fb128f2921097f3716aba0b/managers.py#L300). 
-
+## Transfer grasps to Hithand
+1. Make sure you downloaded the [[dataset folder](https://utdallas.box.com/v/multi-gripper-grasp-data)] to transfer from Allegro to Hithand.
+2. To transfer the grasps from Allegro to Hithand run [./helpful_scripts/transfer_grasps.py](https://github.com/david-s-martinez/isaac_sim_grasping/blob/main/helpful_scripts/transfer_grasps.py), modify the paths accordingly.
+3. Convert ffhnet grasps from dataloader to the graspit format (the quaternion is missing at the moment, and joint config is not remapped to isaac sim yet). The code is [here](https://github.com/david-s-martinez/Multifinger-Net-dev/blob/main/scripts/graspit_from_h5.py).
+4. Visualize them with Isaac sim with [./visualize_grasps.py](https://github.com/david-s-martinez/isaac_sim_grasping#visualizing-dataset-samples) or ./spawn_gripper.py, modify the paths according to your system.
+5. You can also run without isaac sim with [viz_optas](./viz_optas/README.md). The conversion script in step 3 defines a default path_to_graspit_folder already:
+```shell
+python viz_optas/vis_single_pair.py --model_dir ~/path_to_objects/gazebo-objects/objects_gazebo/kit -f ~/path_to_graspit_folder --gripper hithand --model BakingVanilla
+```
 ## More Documentation
 - [Adding a new Gripper](docs/add_grippers.md)
 - [Adding a new Object](docs/add_objects.md)
@@ -210,6 +218,7 @@ Note: To reproduce the transferred grasp results the same must be done with the 
   - Google Scanned Objects and YCB objects .usd files (`Object_Models` folder)
   - Filtered GraspIt Grasps Dataset (.zip file)
   - Transferred Grasps Dataset (.zip file)
+- KIT, YCB, Bigbird usds are here https://github.com/david-s-martinez/gazebo-objects/tree/fix-invalid-mesh-paths/objects_gazebo . 
 - Isaac Sim Manual: https://docs.omniverse.nvidia.com/isaacsim/latest/overview.html
 - Helpful code for python standalones (code snippet samples): https://docs.omniverse.nvidia.com/isaacsim/latest/reference_python_snippets.html
 - Installing Packages for use with isaac sim python.sh: https://docs.omniverse.nvidia.com/isaacsim/latest/installation/install_python.html
