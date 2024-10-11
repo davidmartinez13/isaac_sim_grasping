@@ -42,13 +42,13 @@ def make_parser():
     parser.add_argument('--force_reset', type=bool, help='Force Reset of Isaac Sim',
                         default=False, action=argparse.BooleanOptionalAction)
     parser.add_argument('--json_dir', type=str, help='Directory of Grasp Information',
-                        default=os.path.join(user_home, 'Documents/Dataset/hithand_transfered'))
+                        default=os.path.join(user_home, './Dataset/hithand_transfered'))
     parser.add_argument('--gripper_dir', type=str, help='Directory of Gripper urdf/usd',
-                        default=os.path.join(user_home, 'isaac_sim_grasping/grippers'))
+                        default=os.path.join(user_home, './grippers'))
     parser.add_argument('--objects_dir', type=str, help='Directory of Object usd',
-                        default=os.path.join(user_home, 'Documents/Dataset/objects_usd/google_objects_usd'))
+                        default=os.path.join(user_home, './Dataset/objects_usd/google_objects_usd'))
     parser.add_argument('--output_dir', type=str, help='Output directory for filtered grasps',
-                        default=os.path.join(user_home, 'Documents/Dataset/graspit_grasps/hithand'))
+                        default=os.path.join(user_home, './Dataset/graspit_grasps/hithand'))
     parser.add_argument('--num_w', type=int, help='Number of Workstations used in the simulation', default=10)
     parser.add_argument('--device', type=int, help='Gpu to use', default=0)
     parser.add_argument('--test_time', type=int, help='Total time for each grasp test', default=3)
@@ -144,8 +144,10 @@ def import_gripper(work_path,usd_path, EF_axis):
         
         # Adding Robot usd
         add_reference_to_stage(usd_path=usd_path, prim_path=work_path+"/gripper")
+        # robot = world.scene.add(Articulation(prim_path = work_path+"/gripper", name="gripper",
+        #                     position = gripper_pose[0], orientation = gripper_pose[1], enable_dof_force_sensors = True))
         robot = world.scene.add(Articulation(prim_path = work_path+"/gripper", name="gripper",
-                            position = gripper_pose[0], orientation = gripper_pose[1], enable_dof_force_sensors = True))
+                            position = gripper_pose[0], orientation = gripper_pose[1]))
         robot.set_enabled_self_collisions(False)
         return robot, T_EF
 

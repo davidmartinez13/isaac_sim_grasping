@@ -4,7 +4,7 @@ import time
 
 
 #Custom Classes and utils
-from utils import te_batch,re_batch
+# from .utils import te_batch,re_batch
 
 #Omni Libraries
 from omni.isaac.core.utils.numpy.rotations import quats_to_rot_matrices
@@ -13,6 +13,48 @@ from omni.isaac.core.prims.rigid_prim import RigidPrimView
 from omni.isaac.core.articulations import  ArticulationView
 from omni.isaac.core.utils.transformations import pose_from_tf_matrix, tf_matrices_from_poses
 from omni.isaac.core.prims import XFormPrimView
+
+from omni.isaac.dynamic_control import _dynamic_control
+
+def re_batch(R_est, R_gt):
+    """
+    Rotational Error.
+
+    :param R_est: Rotational element of the estimated pose (3x1 vector).
+    :param R_gt: Rotational element of the ground truth pose (3x1 vector).
+    :return: Error of t_est w.r.t. t_gt.
+    """
+    if R_est.ndim <3:
+        R_est = np.expand_dims(R_est, axis=0)
+        R_gt = np.expand_dims(R_gt, axis=0)
+    assert(R_est.shape[0] == R_gt.shape[0])
+
+    # Calculate the dot product of the two sets of rotation matrices
+    dot_products = 0.5 * (np.einsum('ijk,ikj->i', R_est, np.linalg.inv(R_gt))-1)
+
+    # Ensure dot products are within the valid range [-1, 1]
+    dot_products = np.clip(dot_products, -1.0, 1.0)
+
+    # Calculate the angles using arccosine and convert to degrees
+    angles = np.degrees(np.arccos((dot_products)))
+
+    return angles
+
+def te_batch(t_est, t_gt):
+    """
+    Translational Error.
+
+    :param t_est: Translation element of the estimated pose (3x1 vector).
+    :param t_gt: Translation element of the ground truth pose (3x1 vector).
+    :return: Error of t_est w.r.t. t_gt.
+    """
+    #print(t_est.shape, t_gt.shape)
+    if(len(t_est.shape)>2):
+        t_est = np.squeeze(t_est,axis=1)
+        t_gt = np.squeeze(t_gt,axis=1)
+    #assert(t_est.shape[1] == t_gt.shape[1]== 3)
+    error = np.linalg.norm(t_gt - t_est,axis=1)
+    return error
 
 class View():
     """ISAAC SIM VIEWS Class 
@@ -305,7 +347,8 @@ class V_View():
         self.objects.set_world_poses(self.init_positions, self.init_rotations)
 
         # Get max efforts and dofs
-        dc = self.world.dc_interface
+        # dc = self.world.dc_interface
+        dc = _dynamic_control.acquire_dynamic_control_interface()
         articulation = dc.get_articulation(self.work_path+"/gripper")
         self.dof_props = dc.get_articulation_dof_properties(articulation)
         self.close_positions = np.zeros_like(self.dofs)

@@ -112,8 +112,10 @@ def import_gripper(work_path,usd_path, EF_axis):
         
         # Adding Robot usd
         add_reference_to_stage(usd_path=usd_path, prim_path=work_path+"/gripper")
+        # robot = world.scene.add(Articulation(prim_path = work_path+"/gripper", name="gripper",
+        #                     position = gripper_pose[0], orientation = gripper_pose[1], enable_dof_force_sensors = True))
         robot = world.scene.add(Articulation(prim_path = work_path+"/gripper", name="gripper",
-                            position = gripper_pose[0], orientation = gripper_pose[1], enable_dof_force_sensors = True))
+                            position = gripper_pose[0], orientation = gripper_pose[1]))
         robot.set_enabled_self_collisions(False)
         return robot, T_EF
 
@@ -198,7 +200,8 @@ if __name__ == "__main__":
             contact_names.append(work_path[:-1]+"*"+"/gripper/" +  i)
 
         #Initialize Workstation
-        robot, T_EF = import_gripper(work_path, manager.gripper_path,manager.EF_axis)
+        # manager.EF_axis = 0
+        robot, T_EF = import_gripper(work_path, manager.gripper_path, manager.EF_axis)
         object_parent, mass = import_object(work_path, manager.object_path)
         
         #Clone
@@ -247,7 +250,7 @@ if __name__ == "__main__":
         #world.pause()
         #Run Sim
         with tqdm(total=len(manager.completed)) as pbar:
-            #world.pause()
+            # world.pause()
             while not all(manager.completed):
                 world.step(render=render) # execute one physics step and one rendering step if not headless
                 if pbar.n != np.sum(manager.completed): #Progress bar
