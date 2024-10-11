@@ -191,7 +191,7 @@ if __name__ == "__main__":
     #Load json files 
     json_files = [pos_json for pos_json in os.listdir(json_directory) if pos_json.endswith('.json')]
 
-    for j in json_files:
+    for j in tqdm(json_files):
         #path to output .json file
         out_path = os.path.join(output_directory,j)
         is_debug = True
