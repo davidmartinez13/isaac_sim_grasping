@@ -63,7 +63,7 @@ from pxr import Usd, Sdf
 import_config = _urdf.ImportConfig()
 import_config.merge_fixed_joints = False
 import_config.convex_decomp = False
-import_config.fix_base = True
+import_config.fix_base = False
 import_config.make_default_prim = True
 import_config.self_collision = False
 import_config.make_instanceable = True
