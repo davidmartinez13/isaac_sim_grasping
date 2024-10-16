@@ -92,7 +92,7 @@ elif dataset_name == "bigbird":
     is_add_material = False # for bigbird since it adds it directly
 
 # Set the base directory where the objects are located
-base_dir = "/home/dm/panda_ws/gazebo-objects/objects_gazebo/" + dataset_name
+base_dir = "./gazebo-objects/objects_gazebo/" + dataset_name
 
 for object_name in os.listdir(base_dir):
     object_dir = os.path.join(base_dir, object_name)
@@ -135,10 +135,10 @@ for object_name in os.listdir(base_dir):
                             diffuse_texture_attr = shader_prim.CreateAttribute("inputs:diffuse_texture", Sdf.ValueTypeNames.Asset)
                             material_path = os.path.join(object_dir, material_png)
                             if os.path.isfile(material_path):
-                                diffuse_texture_attr.Set(material_path)
+                                diffuse_texture_attr.Set(material_png)
                             else:
                                 material_path = os.path.join(object_dir, "textured.png")
-                                diffuse_texture_attr.Set(material_path)
+                                diffuse_texture_attr.Set("textured.png")
                             print("Added diffuse texture to {}".format(prim.GetPath()))
 
                 # Save the modified USDA

@@ -1,0 +1,3 @@
+[submodule "gazebo-objects"]
+	path = gazebo-objects
+	url = https://github.com/david-s-martinez/gazebo-objects
