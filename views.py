@@ -137,7 +137,8 @@ class View():
         self.objects.set_world_poses(self.init_positions, self.init_rotations)
 
         # Get max efforts and dofs
-        dc = self.world.dc_interface
+        # dc = self.world.dc_interface
+        dc = _dynamic_control.acquire_dynamic_control_interface()
         articulation = dc.get_articulation(self.work_path+"/gripper")
         self.dof_props = dc.get_articulation_dof_properties(articulation)
         self.close_positions = np.zeros_like(self.dofs)
