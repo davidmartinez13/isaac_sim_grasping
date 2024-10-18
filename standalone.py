@@ -75,6 +75,12 @@ from omni.isaac.core.articulations import Articulation
 from omni.isaac.core.utils.prims import get_prim_children, get_prim_path, get_prim_at_path
 from omni.isaac.core.utils.transformations import pose_from_tf_matrix
 
+# Set Default Lighting to Camera
+import omni.kit.actions.core
+
+action_registry = omni.kit.actions.core.get_action_registry()
+action = action_registry.get_action("omni.kit.viewport.menubar.lighting", "set_lighting_mode_camera")
+action.execute()
 
 def import_gripper(work_path,usd_path, EF_axis):
         """ Imports Gripper to World
