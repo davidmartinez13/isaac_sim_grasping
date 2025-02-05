@@ -10,11 +10,11 @@ def make_parser():
     user_home = os.path.expanduser("~")
     parser = argparse.ArgumentParser(description='Visualization script for filtered grasps.')
     parser.add_argument('--json_dir', type=str, help='Directory of Grasp Information',
-                        default=os.path.join(user_home, 'panda_ws/inference_container/Multifinger-Net-dev/hithand'))
+                        default=os.path.join(user_home, 'Documents/Dataset/hithand_generated'))
     parser.add_argument('--gripper_dir', type=str, help='Directory of Gripper urdf/usd',
                         default=os.path.join(user_home, 'isaac_sim_grasping/grippers'))
     parser.add_argument('--objects_dir', type=str, help='Directory of Object usd',
-                        default=os.path.join(user_home, 'panda_ws/gazebo-objects/objects_gazebo/kit'))
+                        default=os.path.join(user_home, 'isaac_sim_grasping/gazebo-objects/objects_gazebo/ycb'))
     parser.add_argument('--num_w', type=int, help='Number of Workstations used in the simulation', default=10)
     parser.add_argument('--device', type=int, help='Gpu to use', default=0)
     parser.add_argument('--controller', type=str,

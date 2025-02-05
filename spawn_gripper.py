@@ -6,29 +6,6 @@ import argparse
 import sys
 import time
 
-# def make_parser():
-#     """ Input Parser """
-#     parser = argparse.ArgumentParser(description='Standalone script for grasp filtering.')
-#     parser.add_argument('--headless', type=bool, help='Running Program in headless mode',
-#                         default=False, action = argparse.BooleanOptionalAction)
-#     parser.add_argument('--force_reset', type=bool, help='Force Reset of Isaac Sim',
-#                         default=False, action = argparse.BooleanOptionalAction)
-#     parser.add_argument('--json_dir', type=str, help='Directory of Grasp Information', default='')
-#     parser.add_argument('--gripper_dir', type=str, help='Directory of Gripper urdf/usd', default='')
-#     parser.add_argument('--objects_dir', type=str, help='Directory of Object usd', default='')
-#     parser.add_argument('--output_dir', type=str, help='Output directroy for filterd grasps', default='')
-#     parser.add_argument('--num_w', type=int, help='Number of Workstations used in the simulation', default=150)
-#     parser.add_argument('--device', type=int, help='Gpu to use', default=0)
-#     parser.add_argument('--test_time', type=int, help='Total time for each grasp test', default=3)
-#     parser.add_argument('--print_results', type=bool, help='Enable printing of grasp statistics after filtering a document',
-#                          default=False, action = argparse.BooleanOptionalAction)
-#     parser.add_argument('--controller', type=str,
-#                         help='Gripper Controller to use while testing, should match the controller dictionary in the Manager Class',
-#                         default='transfer_default')
-#     parser.add_argument('--/log/level', type=str, help='isaac sim logging arguments', default='', required=False)
-#     parser.add_argument('--/log/fileLogLevel', type=str, help='isaac sim logging arguments', default='', required=False)
-#     parser.add_argument('--/log/outputStreamLevel', type=str, help='isaac sim logging arguments', default='', required=False)
-#     return parser
 def make_parser():
     """ Input Parser """
     # Get the current user's home directory
@@ -42,11 +19,13 @@ def make_parser():
     parser.add_argument('--force_reset', type=bool, help='Force Reset of Isaac Sim',
                         default=False, action=argparse.BooleanOptionalAction)
     parser.add_argument('--json_dir', type=str, help='Directory of Grasp Information',
-                        default=os.path.join(user_home, 'Documents/Dataset/hithand_transfered'))
+                        default=os.path.join(user_home, 'Documents/Dataset/hithand_generated'))
     parser.add_argument('--gripper_dir', type=str, help='Directory of Gripper urdf/usd',
                         default=os.path.join(user_home, 'isaac_sim_grasping/grippers'))
     parser.add_argument('--objects_dir', type=str, help='Directory of Object usd',
-                        default=os.path.join(user_home, 'Documents/Dataset/objects_usd/google_objects_usd'))
+                        default=os.path.join(user_home, 'isaac_sim_grasping/gazebo-objects/objects_gazebo/ycb'))
+    # parser.add_argument('--objects_dir', type=str, help='Directory of Object usd',
+    #                     default=os.path.join(user_home, 'Documents/Dataset/objects_usd/google_objects_usd'))
     parser.add_argument('--output_dir', type=str, help='Output directory for filtered grasps',
                         default=os.path.join(user_home, 'Documents/Dataset/graspit_grasps/hithand'))
     parser.add_argument('--num_w', type=int, help='Number of Workstations used in the simulation', default=10)
@@ -99,6 +78,7 @@ from omni.isaac.core.prims.geometry_prim import GeometryPrim
 from omni.isaac.core.articulations import Articulation
 from omni.isaac.core.utils.prims import get_prim_children, get_prim_path, get_prim_at_path
 from omni.isaac.core.utils.transformations import pose_from_tf_matrix
+import omni.isaac.core.utils.prims as prim_utils
 
 
 def import_gripper(work_path,usd_path, EF_axis):
@@ -251,6 +231,14 @@ if __name__ == "__main__":
         cloner.clone(source_prim_path = "/World/Workstation_0", prim_paths = target_paths,
                      copy_from_source = True, replicate_physics = True, base_env_path = "/World",
                      root_path = "/World/Workstation_")
+        
+        light_1 = prim_utils.create_prim(
+            "/World/Light_1",
+            "DomeLight",
+            attributes={
+                "inputs:intensity": 1000
+            }
+        )
 
         # ISAAC SIM views initialization
         viewer = View(work_path,contact_names,num_w, manager,world, test_time, mass)
