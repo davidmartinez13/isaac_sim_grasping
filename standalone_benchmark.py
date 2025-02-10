@@ -6,7 +6,6 @@ import argparse
 import sys
 import time
 
-
 def make_parser():
     """ Input Parser """
     user_home = os.path.expanduser("~")
@@ -16,7 +15,7 @@ def make_parser():
     parser.add_argument('--force_reset', type=bool, help='Force Reset of Isaac Sim',
                         default=False, action = argparse.BooleanOptionalAction)
     parser.add_argument('--json_dir', type=str, help='Directory of Grasp Information',
-                        default=os.path.join(user_home, 'calibration/eyeinhand_nerf1/img_ycb_scene/foundation_pose/isaac_sim_grasps'))
+                        default=os.path.join(user_home, 'f3rm/datasets/eyeinhand_nerf1/benchmark'))
     parser.add_argument('--gripper_dir', type=str, help='Directory of Gripper urdf/usd',
                         default=os.path.join(user_home, 'isaac_sim_grasping/grippers'))
     parser.add_argument('--objects_dir', type=str, help='Directory of Object usd',
@@ -66,7 +65,7 @@ from omni.isaac.core.utils.stage import add_reference_to_stage
 # Custom Classes
 from managers import Manager
 from views import View
-
+from helpful_scripts.evaluate_grasp_quality import eval
 #Omni Libraries
 from omni.isaac.core.utils.stage import add_reference_to_stage,open_stage, save_stage
 from omni.isaac.core.prims.rigid_prim import RigidPrim 
@@ -162,12 +161,12 @@ def import_object(work_path, usd_path):
 if __name__ == "__main__":
     
     # Directories
-    json_directory = args.json_dir
+    jsons_directory = args.json_dir
     grippers_directory = args.gripper_dir
     objects_directory = args.objects_dir
     output_directory = args.output_dir
     
-    if not os.path.exists(json_directory):
+    if not os.path.exists(jsons_directory):
         raise ValueError("Json directory not given correctly")
     elif not os.path.exists(grippers_directory):
         raise ValueError("Grippers directory not given correctly")
@@ -187,109 +186,119 @@ if __name__ == "__main__":
     
     #Debugging
     render = not head
-
-    #Load json files 
-    json_files = [pos_json for pos_json in os.listdir(json_directory) if pos_json.endswith('.json')]
-
-    for j in json_files:
-        #path to output .json file
-        out_path = os.path.join(output_directory,j)
-        is_debug = True
-        if(os.path.exists(out_path) and not is_debug): #Skip completed
+    
+    for session in os.listdir(jsons_directory):
+        json_directory = os.path.join(jsons_directory, session)
+        if os.path.exists(f"{json_directory}/hithand_filtered.csv"):
+            print(f"Already evaluated {json_directory}, skipping ...")
             continue
+        #Load json files 
+        json_files = [pos_json for pos_json in os.listdir(json_directory) if pos_json.endswith('.json')]
 
-        # Initialize Manager
-        manager = Manager(os.path.join(json_directory,j), grippers_directory, objects_directory, controller)   
-        
-
-        #Create initial Workstation Prim
-        work_path = "/World/Workstation_0"
-        work_prim = define_prim(work_path)
-
-        #Contact names for collisions
-        contact_names = []
-        for i in manager.c_names:
-            contact_names.append(work_path[:-1]+"*"+"/gripper/" +  i)
-
-        #Initialize Workstation
-        robot, T_EF = import_gripper(work_path, manager.gripper_path,manager.EF_axis)
-        object_parent, mass = import_object(work_path, manager.object_path)
-        
-        #Clone
-        cloner = GridCloner(spacing = 1)
-        target_paths = []
-        for i in range(num_w):
-             target_paths.append(work_path[:-1]+str(i))
-        cloner.clone(source_prim_path = "/World/Workstation_0", prim_paths = target_paths,
-                     copy_from_source = True, replicate_physics = True, base_env_path = "/World",
-                     root_path = "/World/Workstation_")
-        
-        light_1 = prim_utils.create_prim(
-            "/World/Light_1",
-            "DomeLight",
-            attributes={
-                "inputs:intensity": 1000
-            }
-        )
-
-        # ISAAC SIM views initialization
-        viewer = View(work_path,contact_names,num_w, manager,world, test_time, mass)
-
-        
-        #Reset World and create set first robot positions
-        world.reset()
-
-        # Print Robot DoFs
-        print(robot.dof_names)
-        viewer.dofs, viewer.current_poses, viewer.current_job_IDs = viewer.get_jobs(num_w)
-
-        # Set desired physics Context options
-        world.reset()
-        physicsContext = world.get_physics_context()
-        #physicsContext.set_solver_type("PGS")
-        physicsContext.set_physics_dt(manager.physics_dt)
-        physicsContext.enable_gpu_dynamics(True)
-        physicsContext.enable_stablization(True)
-        physicsContext.set_gravity(-9.81)
-
-        world.reset()
-        
-        #Initialize views
-        viewer.grippers.initialize(world.physics_sim_view)
-        viewer.objects.initialize(world.physics_sim_view)
-        viewer.post_reset()
-
-        #world.pause()
-        #Run Sim
-        with tqdm(total=len(manager.completed)) as pbar:
-            while not all(manager.completed):
-                #print(mass)
+        for j in json_files:
+            #path to output .json file
                 
-                world.step(render=render) # execute one physics step and one rendering step if not headless
-                #world.pause()
-                if pbar.n != np.sum(manager.completed): #Progress bar
-                    pbar.update(np.sum(manager.completed)-pbar.n)
-    
+            out_eval_path = f"{json_directory}/filtered"
+            if not os.path.exists(out_eval_path):
+                os.mkdir(out_eval_path)
+            out_path = os.path.join(out_eval_path,j)
+            is_debug = True
+            if(os.path.exists(out_path) and not is_debug): #Skip completed
+                continue
 
-        #Save new json with results
-        manager.save_json(out_path)
-        if (verbose):
-            manager.report_results()
-        #print("Reseting Environment")
+            # Initialize Manager
+            manager = Manager(os.path.join(json_directory,j), grippers_directory, objects_directory, controller)   
+            
 
-        #Reset World    
-        if not force_reset:
-            print('Reseting Environment')
-            t = time.time()
-            world.stop()
-            world.clear_physics_callbacks()
-            world.clear()
-            t = time.time() -t
-            print('Reseted, time in seconds: ', t)
+            #Create initial Workstation Prim
+            work_path = "/World/Workstation_0"
+            work_prim = define_prim(work_path)
 
-        if force_reset:
-            os.execl(sys.executable, sys.executable, *sys.argv)
-            pass
-    
+            #Contact names for collisions
+            contact_names = []
+            for i in manager.c_names:
+                contact_names.append(work_path[:-1]+"*"+"/gripper/" +  i)
+
+            #Initialize Workstation
+            robot, T_EF = import_gripper(work_path, manager.gripper_path,manager.EF_axis)
+            object_parent, mass = import_object(work_path, manager.object_path)
+            
+            #Clone
+            cloner = GridCloner(spacing = 1)
+            target_paths = []
+            for i in range(num_w):
+                target_paths.append(work_path[:-1]+str(i))
+            cloner.clone(source_prim_path = "/World/Workstation_0", prim_paths = target_paths,
+                        copy_from_source = True, replicate_physics = True, base_env_path = "/World",
+                        root_path = "/World/Workstation_")
+            
+            light_1 = prim_utils.create_prim(
+                "/World/Light_1",
+                "DomeLight",
+                attributes={
+                    "inputs:intensity": 1000
+                }
+            )
+
+            # ISAAC SIM views initialization
+            viewer = View(work_path,contact_names,num_w, manager,world, test_time, mass)
+
+            
+            #Reset World and create set first robot positions
+            world.reset()
+
+            # Print Robot DoFs
+            print(robot.dof_names)
+            viewer.dofs, viewer.current_poses, viewer.current_job_IDs = viewer.get_jobs(num_w)
+
+            # Set desired physics Context options
+            world.reset()
+            physicsContext = world.get_physics_context()
+            #physicsContext.set_solver_type("PGS")
+            physicsContext.set_physics_dt(manager.physics_dt)
+            physicsContext.enable_gpu_dynamics(True)
+            physicsContext.enable_stablization(True)
+            physicsContext.set_gravity(-9.81)
+
+            world.reset()
+            
+            #Initialize views
+            viewer.grippers.initialize(world.physics_sim_view)
+            viewer.objects.initialize(world.physics_sim_view)
+            viewer.post_reset()
+
+            #world.pause()
+            #Run Sim
+            with tqdm(total=len(manager.completed)) as pbar:
+                while not all(manager.completed):
+                    #print(mass)
+                    
+                    world.step(render=render) # execute one physics step and one rendering step if not headless
+                    #world.pause()
+                    if pbar.n != np.sum(manager.completed): #Progress bar
+                        pbar.update(np.sum(manager.completed)-pbar.n)
+        
+
+            #Save new json with results
+            manager.save_json(out_path)
+            if (verbose):
+                manager.report_results()
+            #print("Reseting Environment")
+
+            #Reset World    
+            if not force_reset:
+                print('Reseting Environment')
+                t = time.time()
+                world.stop()
+                world.clear_physics_callbacks()
+                world.clear()
+                t = time.time() -t
+                print('Reseted, time in seconds: ', t)
+
+            if force_reset:
+                os.execl(sys.executable, sys.executable, *sys.argv)
+                pass
+
+        eval(out_eval_path, json_directory)
     simulation_app.close() # close Isaac Sim
         
