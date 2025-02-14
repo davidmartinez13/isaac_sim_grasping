@@ -5,7 +5,7 @@ conda deactivate
     --gripper_dir=/home/$USER/isaac_sim_grasping/grippers \
     --objects_dir=/home/$USER/isaac_sim_grasping/gazebo-objects/objects_gazebo/ycb \
     --output_dir=/home/$USER/Documents/Dataset/hithand_filtered \
-    --headless\
+    --headless \
     --num_w=50 \
     --test_time=3 \
     --controller=default \

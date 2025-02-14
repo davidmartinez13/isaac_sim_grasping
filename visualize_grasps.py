@@ -10,7 +10,7 @@ def make_parser():
     user_home = os.path.expanduser("~")
     parser = argparse.ArgumentParser(description='Visualization script for filtered grasps.')
     parser.add_argument('--json_dir', type=str, help='Directory of Grasp Information',
-                        default=os.path.join(user_home, 'Documents/Dataset/hithand_generated'))
+                        default=os.path.join(user_home, 'f3rm/datasets/eyeinhand_nerf1/benchmark/dex-f3rm_2025-02-13_220329'))
     parser.add_argument('--gripper_dir', type=str, help='Directory of Gripper urdf/usd',
                         default=os.path.join(user_home, 'isaac_sim_grasping/grippers'))
     parser.add_argument('--objects_dir', type=str, help='Directory of Object usd',

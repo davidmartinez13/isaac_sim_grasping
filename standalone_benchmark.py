@@ -120,7 +120,7 @@ def import_gripper(work_path,usd_path, EF_axis):
         add_reference_to_stage(usd_path=usd_path, prim_path=work_path+"/gripper")
         robot = world.scene.add(Articulation(prim_path = work_path+"/gripper", name="gripper",
                             position = gripper_pose[0], orientation = gripper_pose[1], enable_dof_force_sensors = True))
-        robot.set_enabled_self_collisions(False)
+        robot.set_enabled_self_collisions(True)
         return robot, T_EF
 
 def import_object(work_path, usd_path):
@@ -249,6 +249,7 @@ if __name__ == "__main__":
 
             # Print Robot DoFs
             print(robot.dof_names)
+            manager.opened_dofs(robot.dof_names)
             viewer.dofs, viewer.current_poses, viewer.current_job_IDs = viewer.get_jobs(num_w)
 
             # Set desired physics Context options

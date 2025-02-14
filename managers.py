@@ -126,7 +126,23 @@ class Manager:
         job_IDs = np.asarray(job_IDs)
         #print('Jobs given ', job_IDs)
         return dofs, poses, job_IDs
+    
+    def opened_dofs(self, robot_idx):
+        """ Sets starting DoFs of all grasps to the gripper opened position.
 
+        Args: 
+            robot_idx: List of dofs indices names of the grippers given by Isaac Sim
+        """
+
+        robot_pos= np.ones((self.n_jobs,len(robot_idx)))
+
+        # Opened dof for gripper
+        robot_pos= robot_pos * np.asarray(self.gripper_dict["opened_dofs"])
+        
+        self.dofs = robot_pos
+        self.final_dofs = np.zeros_like(self.dofs)
+        return robot_pos
+    
     def report_fall(self, job_ID, value,test_type, test_time, new_dofs):
         """ Reports falls of objects in grasp tests
         
