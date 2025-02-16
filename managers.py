@@ -46,8 +46,14 @@ class Manager:
         self._init_gripper_dicts(grippers_path)
         
         # Extract info from dictionaries external and internal
-        self.controller = controller_dict[controller]
         self.close_mask = self.gripper_dict["close_dir"]
+        
+        if self.gripper_dict["is_use_primitive"]:
+            primitive = self.dofs.mean(axis=0)
+            if np.all(primitive!=0.0):
+                self.close_mask = (primitive + self.gripper_dict["joint_offset"]).tolist()
+
+        self.controller = controller_dict[controller]
         self.contact_th = self.gripper_dict["contact_th"]
         self.physics_dt = 1/self.gripper_dict["physics_frequency"]
         self.c_names = self.gripper_dict["contact_names"]

@@ -9,6 +9,7 @@ conda deactivate
     --num_w=50 \
     --test_time=3 \
     --controller=default \
+    --device=0 \
     --print_results \
     --/log/level=error \
     --/log/fileLogLevel=error \
