@@ -51,7 +51,8 @@ class Manager:
         if self.gripper_dict["is_use_primitive"]:
             primitive = self.dofs.mean(axis=0)
             if np.all(primitive!=0.0):
-                self.close_mask = (primitive + self.gripper_dict["joint_offset"]).tolist()
+                primitive[5:]+=self.gripper_dict["joint_offset"]
+                self.close_mask = primitive.tolist()
 
         self.controller = controller_dict[controller]
         self.contact_th = self.gripper_dict["contact_th"]

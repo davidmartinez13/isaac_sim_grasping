@@ -2,7 +2,7 @@
 "hithand": {
     "EF_axis": 3, 
     "physics_frequency": 240,
-    "joint_offset": 0.15,
+    "joint_offset": 0.35,
     "is_use_primitive": true,
     "close_dir": [
     0, 0, 0, 0, -1, 
